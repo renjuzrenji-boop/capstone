@@ -10,6 +10,7 @@ const auth = useAuthStore()
     <h1>Dashboard</h1>
     <p v-if="auth.user">Welcome, {{ auth.user.name }}.</p>
     <p v-if="auth.role" class="dashboard__role">Signed in as {{ auth.role }}.</p>
+    <RouterLink v-if="auth.can('employees:read')" to="/app/employees" class="dashboard__link">Manage employees &rarr;</RouterLink>
   </main>
 </template>
 
@@ -32,6 +33,11 @@ const auth = useAuthStore()
   h1 {
     margin: 0;
     font-size: clamp(2rem, 5vw, 3.5rem);
+  }
+
+  .dashboard__link {
+    color: #28786f;
+    font-weight: 600;
   }
 
   .dashboard__role {

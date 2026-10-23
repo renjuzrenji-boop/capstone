@@ -8,8 +8,8 @@ const PORT = Number(process.env.PORT ?? 3000)
 const JWT_SECRET = 'dev-only-secret-change-me'
 const TOKEN_TTL = '1h'
 const ROLE_PERMISSIONS = {
-  admin: ['dashboard:view', 'users:read', 'users:write', 'reports:read', 'settings:manage'],
-  manager: ['dashboard:view', 'users:read', 'reports:read'],
+  admin: ['dashboard:view', 'users:read', 'users:write', 'reports:read', 'settings:manage', 'employees:read', 'employees:write'],
+  manager: ['dashboard:view', 'users:read', 'reports:read', 'employees:read'],
   user: ['dashboard:view'],
 }
 
@@ -62,6 +62,25 @@ server.post('/auth/login', (req, res) => {
 server.get('/auth/me', authenticate, (req, res) => res.json(toPublic(req.user)))
 
 server.use(authenticate)
+
+const EMPLOYEE_FIELDS = ['name', 'email', 'phone', 'department', 'designation', 'joiningDate', 'status']
+
+server.use('/employees', (req, res, next) => {
+  const needed = req.method === 'GET' ? 'employees:read' : 'employees:write'
+  const allowed = ROLE_PERMISSIONS[req.user.role]?.includes(needed)
+  if (!allowed) return res.status(403).json({ message: 'You do not have permission to do that' })
+
+  if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
+    const body = req.body ?? {}
+    const clean = Object.fromEntries(EMPLOYEE_FIELDS.filter((k) => k in body).map((k) => [k, body[k]]))
+    if (req.method !== 'PATCH') {
+      const missing = ['name', 'email', 'department', 'designation'].filter((k) => !String(clean[k] ?? '').trim())
+      if (missing.length) return res.status(400).json({ message: `Missing: ${missing.join(', ')}` })
+    }
+    req.body = clean
+  }
+  next()
+})
 
 server.use(router)
 

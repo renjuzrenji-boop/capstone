@@ -6,6 +6,8 @@ export type Permission = | 'dashboard:view'
   | 'users:write'
   | 'reports:read'
   | 'settings:manage'
+  | 'employees:read'
+  | 'employees:write'
 
 export interface Credentials {
   email: string

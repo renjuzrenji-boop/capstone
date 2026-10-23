@@ -29,4 +29,28 @@ export const routes: RouteRecordRaw[] = [
     component: () => import('@/views/dashboard/DashboardView.vue'),
     meta: { title: 'Dashboard', requiresAuth: true, permissions: ['dashboard:view'] },
   },
+  {
+    path: '/app/employees',
+    name: 'employees',
+    component: () => import('@/views/employees/EmployeeListView.vue'),
+    meta: { title: 'Employees', requiresAuth: true, permissions: ['employees:read'] },
+  },
+  {
+    path: '/app/employees/new',
+    name: 'employee-new',
+    component: () => import('@/views/employees/EmployeeFormView.vue'),
+    meta: { title: 'Add Employee', requiresAuth: true, permissions: ['employees:write'] },
+  },
+  {
+    path: '/app/employees/:id',
+    name: 'employee-detail',
+    component: () => import('@/views/employees/EmployeeDetailView.vue'),
+    meta: { title: 'Employee Details', requiresAuth: true, permissions: ['employees:read'] },
+  },
+  {
+    path: '/app/employees/:id/edit',
+    name: 'employee-edit',
+    component: () => import('@/views/employees/EmployeeFormView.vue'),
+    meta: { title: 'Edit Employee', requiresAuth: true, permissions: ['employees:write'] },
+  },
 ]

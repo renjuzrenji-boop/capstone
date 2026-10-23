@@ -17,4 +17,8 @@ router.beforeEach((to) => {
   if (to.meta.guestOnly && auth.isAuthenticated) {
     return { name: 'dashboard' }
   }
+
+  if (to.meta.permissions && !auth.can(...to.meta.permissions)) {
+    return { name: 'dashboard' }
+  }
 })
