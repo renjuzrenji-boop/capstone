@@ -1,0 +1,9 @@
+{
+  "users": [
+    { "id": "1", "name": "Alice Admin", "email": "admin@example.com", "password": "Admin@123", "role": "admin" },
+    { "id": "2", "name": "Mark Manager", "email": "manager@example.com", "password": "Manager@123", "role": "manager" },
+    { "id": "3", "name": "Uma User", "email": "user@example.com", "password": "User@123", "role": "user" },
+    { "id": "4", "name": "Ravi Kumar", "email": "ravi@example.com", "password": "Ravi@123", "role": "user" },
+    { "id": "5", "name": "Meera Nair", "email": "meera@example.com", "password": "Meera@123", "role": "manager" }
+  ]
+}
