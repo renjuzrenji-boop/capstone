@@ -23,7 +23,7 @@ export const useEmployeesStore = defineStore('employees', () => {
   }
 
   const fetchAll = () => run(async () => { items.value = await employeesApi.list() })
-  const fetchOne = (id: string) => run(() => employeesApi.get(id))
+  const fetchOne = (id: number) => run(() => employeesApi.get(id))
 
   const create = (payload: NewEmployee) =>
     run(async () => {
@@ -32,14 +32,14 @@ export const useEmployeesStore = defineStore('employees', () => {
       return created
     })
 
-  const update = (id: string, payload: NewEmployee) =>
+  const update = (id: number, payload: NewEmployee) =>
     run(async () => {
       const updated = await employeesApi.update(id, payload)
       items.value = items.value.map((e) => (e.id === id ? updated : e))
       return updated
     })
 
-  const remove = (id: string) =>
+  const remove = (id: number) =>
     run(async () => {
       await employeesApi.remove(id)
       items.value = items.value.filter((e) => e.id !== id)

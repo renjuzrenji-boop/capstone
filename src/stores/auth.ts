@@ -45,10 +45,22 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
 
+  async function restore() {
+    if (initialized.value) return
+    try {
+      if (token.value && !user.value) user.value = await authApi.me()
+    } catch {
+      token.value = null
+      localStorage.removeItem(TOKEN_KEY)
+    } finally {
+      initialized.value = true
+    }
+  }
+
   return {
     token, user, initialized, loading, error,
     isAuthenticated, role, permissions,
-    hasRole, can, login, 
+    hasRole, can, login, restore,
   }
 
 

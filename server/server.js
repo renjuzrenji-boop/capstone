@@ -63,7 +63,7 @@ server.get('/auth/me', authenticate, (req, res) => res.json(toPublic(req.user)))
 
 server.use(authenticate)
 
-const EMPLOYEE_FIELDS = ['name', 'email', 'phone', 'department', 'designation', 'joiningDate', 'status']
+const EMPLOYEE_FIELDS = ['name', 'email', 'phone', 'department', 'designation', 'joiningDate', 'status', 'skills', 'primarySkill', 'workExperience', 'techStack', 'currentProject', 'previousProjects', 'completedTraning', 'TrainingStatus']
 
 server.use('/employees', (req, res, next) => {
   const needed = req.method === 'GET' ? 'employees:read' : 'employees:write'

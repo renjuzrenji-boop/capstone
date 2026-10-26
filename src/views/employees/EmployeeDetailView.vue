@@ -9,7 +9,7 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const store = useEmployeesStore()
-const id = String(route.params.id)
+const id = Number(route.params.id)
 
 const employee = ref<Employee | null>(null)
 const confirming = ref(false)
@@ -36,6 +36,10 @@ const fields = (e: Employee): [string, string][] => [
   ['Phone', e.phone || '—'],
   ['Department', e.department],
   ['Designation', e.designation],
+  ['Skills', e.skills?.join(', ') || '—'],
+  ['Primary skill', e.primarySkill || '—'],
+  ['Work experience', e.workExperience || '—'],
+  ['Tech stack', e.techStack?.join(', ') || '—'],
   ['Joining date', e.joiningDate || '—'],
   ['Status', e.status],
 ]
@@ -56,12 +60,45 @@ const fields = (e: Employee): [string, string][] => [
         </div>
       </div>
 
+      
       <dl class="divide-y divide-gray-100 rounded border border-gray-200">
         <div v-for="[label, value] in fields(employee)" :key="label" class="grid grid-cols-3 gap-4 px-4 py-3">
           <dt class="text-sm text-gray-500">{{ label }}</dt>
           <dd class="col-span-2">{{ value }}</dd>
         </div>
       </dl>
+
+      <div class="mt-6 bg-gray-100 p-4 rounded">
+        <h1 class="text-3xl font-bold">Projects Details</h1>
+        <div class="mt-4">
+          <h3 class="font-semibold">Current Project</h3>
+          <p>Name: {{ employee.currentProject.name || '—' }}</p>
+          <p>Role: {{ employee.currentProject.role || '—' }}</p>
+          <p>Duration: {{ employee.currentProject.duration || '—' }}</p>
+        </div>
+        <div class="mt-4">
+          <h3 class="font-semibold">Previous Projects</h3>
+          <ul>
+            <li v-for="(project, index) in employee.previousProjects" :key="index">{{ project }}</li>
+            <li v-if="!employee.previousProjects.length">—</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="mt-6 bg-gray-100 p-4 rounded">
+        <h1 class="text-3xl font-bold">Training Details</h1>
+        <div class="mt-4">
+          <h3 class="font-semibold">Completed Training</h3>
+          <ul>
+            <li v-for="(training, index) in employee.completedTraning" :key="index">{{ training }}</li>
+            <li v-if="!employee.completedTraning.length">—</li>
+          </ul>
+        </div>
+        <div class="mt-4">
+          <h3 class="font-semibold">Training Status</h3>
+          <p>{{ employee.TrainingStatus || '—' }}</p>
+        </div>
+      </div>
     </section>
 
     <div v-if="confirming" class="fixed inset-0 flex items-center justify-center bg-black/40" role="dialog" aria-modal="true">
