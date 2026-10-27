@@ -29,7 +29,7 @@ export const useEmployeesStore = defineStore('employees', () => {
     execute(async () => {
       await employeesApi.remove(id)
       items.value = items.value.filter((e) => e.id !== id)
-    })
+    }, 'Unable to delete employee', 'Employee deleted successfully.')
 
   return { items, loading, error, msg, fetchAll, fetchOne, create, update, remove }
 })
