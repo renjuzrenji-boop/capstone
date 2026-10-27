@@ -10,7 +10,6 @@ const store = useEmployeesStore()
 const { search, status, skills, experience, project, projectOptions, filtered, clearFilters: clearFilter } =
   useEmployeeFilters(() => store.items)
 const deleting = ref<Employee | null>(null)
-
 onMounted(() => store.fetchAll().catch(() => {}))
 
 async function confirmDelete() {
@@ -40,6 +39,9 @@ async function confirmDelete() {
       </RouterLink>
     </header>
 
+    <p v-if="store.msg" class="mb-4 rounded bg-green-50 p-3 text-green-700" role="status">
+      {{ store.msg }}
+    </p>
     <div class="mb-4 flex flex-wrap gap-3">
       <input
         v-model="search"
