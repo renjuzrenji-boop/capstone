@@ -1,68 +1,17 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useEmployeesStore } from '@/stores/employees'
+import { useEmployeeFilters } from '@/composables/useEmployeeFilters'
 import type { Employee } from '@/types/employee'
 
 const auth = useAuthStore()
 const store = useEmployeesStore()
-const search = ref('')
-const status = ref<'all' | 'active' | 'inactive'>('all')
-const skills = ref<'all' | 'java' | 'python' | 'javascript'>('all')
-const experience = ref<'all' | '0-1' | '1-3' | '3-5' | '5+'>('all')
-const project = ref('all')
+const { search, status, skills, experience, project, projectOptions, filtered, clearFilters: clearFilter } =
+  useEmployeeFilters(() => store.items)
 const deleting = ref<Employee | null>(null)
 
 onMounted(() => store.fetchAll().catch(() => {}))
-
-const convertToMonths = (experience: string | undefined) => {
-  const value = parseFloat(experience ?? '')
-  if (Number.isNaN(value)) return null
-
-  // A bare number such as "2" is treated as years
-  return (experience ?? '').toLowerCase().includes('month') ? value : value * 12
-}
-
-const EXPERIENCE_RANGES: Record<string, [number, number]> = {
-  '0-1': [0, 12],
-  '1-3': [12, 36],
-  '3-5': [36, 60],
-  '5+': [60, Infinity],
-}
-
-const matchesExperience = (workExperience: string | undefined, selectedRange: string) => {
-  const months = convertToMonths(workExperience)
-  const range = EXPERIENCE_RANGES[selectedRange]
-
-  return months !== null && !!range && months >= range[0] && months < range[1]
-}
-
-const projectsOf = (e: Employee) =>
-  [e.currentProject?.name, ...(e.previousProjects ?? [])].filter((n): n is string => !!n?.trim())
-
-const projectOptions = computed(() =>
-  [...new Set(store.items.flatMap(projectsOf))].sort((a, b) => a.localeCompare(b)),
-)
-
-const filtered = computed(() => {
-  const q = search.value.trim().toLowerCase()
-  return store.items.filter((e) => {
-    const match =
-      (status.value === 'all' || e.status === status.value) &&
-      (skills.value === 'all' || (e.skills ?? []).some((s) => s.toLowerCase() === skills.value))  && (experience.value === 'all' || matchesExperience(e.workExperience, experience.value))&&
-      (project.value === 'all' || projectsOf(e).includes(project.value)) &&
-      (!q || [e.name, e.email, e.department, e.designation].some((v) => v.toLowerCase().includes(q)))
-    console.log('filter employee:', e.name,e.skills, { status: status.value, skills: skills.value, q, match, experience: experience.value, project: project.value, original:e.workExperience })
-    return match
-  })
-})
-function clearFilter() {
-  search.value = ''
-  status.value = 'all'
-  skills.value = 'all'
-  experience.value = 'all'
-  project.value = 'all'
-}
 
 async function confirmDelete() {
   if (!deleting.value) return

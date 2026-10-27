@@ -1,102 +1,19 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useEmployeesStore } from '@/stores/employees'
-import type { NewEmployee } from '@/types/employee'
+import { useEmployeeForm } from '@/composables/useEmployeeForm'
 
-const route = useRoute()
-const router = useRouter()
-const store = useEmployeesStore()
-
-const id = computed(() => (route.params.id ? Number(route.params.id) : null))
-const isEdit = computed(() => !!id.value)
-
-const today = new Date().toISOString().slice(0, 10)
-const originalDate = ref<string | null>(null)
-const minDate = computed(() => (originalDate.value && originalDate.value < today ? originalDate.value : today))
-
-const form = reactive<NewEmployee>({
-  name: '',
-  email: '',
-  phone: '',
-  department: '',
-  designation: '',
-  joiningDate: today,
-  status: 'active',
-  skills: [],
-  primarySkill: '',
-  workExperience: '',
-  techStack: [],
-  currentProject: {
-    name: '',
-    role: '',
-    duration: ''
-  },
-  previousProjects: [],
-  completedTraning: [],
-  TrainingStatus: ''
-})
-
-const toList = (s: string) => s.split(',').map((v) => v.trim()).filter(Boolean)
-const skillsText = computed({
-  get: () => form.skills.join(', '),
-  set: (v: string) => (form.skills = toList(v)),
-})
-const techStackText = computed({
-  get: () => form.techStack.join(', '),
-  set: (v: string) => (form.techStack = toList(v)),
-})
-const previousProjectsText = computed({
-  get: () => form.previousProjects.join(', '),
-  set: (v: string) => (form.previousProjects = toList(v)),
-})
-const errors = ref<Partial<Record<keyof NewEmployee, string>>>({})
-
-const completedTrainingText = computed({
-  get: () => form.completedTraning.join(', '),
-  set: (v: string) => (form.completedTraning = toList(v)),
-})
-onMounted(async () => {
-  if (!id.value) return
-  try {
-    const { id: _id, ...data } = await store.fetchOne(id.value)
-    Object.assign(form, data, {
-      skills: data.skills ?? [],
-      techStack: data.techStack ?? [],
-      previousProjects: data.previousProjects ?? [],
-      currentProject: { ...data.currentProject },
-    })
-    originalDate.value = data.joiningDate
-  } catch {
-    /* error shown from store */
-  }
-})
-
-function validate() {
-  const e: typeof errors.value = {}
-  if (!form.name.trim()) e.name = 'Name is required'
-  if (!/^\S+@\S+\.\S+$/.test(form.email)) e.email = 'Enter a valid email'
-  if (form.phone && !/^[+\d][\d\s-]{6,}$/.test(form.phone)) e.phone = 'Enter a valid phone number'
-  if (!form.department.trim()) e.department = 'Department is required'
-  if (!form.designation.trim()) e.designation = 'Designation is required'
-  if (!form.joiningDate) e.joiningDate = 'Joining date is required'
-  else if (form.joiningDate < minDate.value) e.joiningDate = 'Past dates are not allowed'
-  errors.value = e
-  return Object.keys(e).length === 0
-}
-
-async function submit() {
-  if (!validate()) return
-  const payload = { ...form, name: form.name.trim(), email: form.email.trim() }
-  console.log(payload);
-  try {
-    if (id.value) await store.update(id.value, payload)
-    else await store.create(payload)
-    router.push('/app/employees')
-  } catch {
-    /* error shown from store */
-  }
-}
+const {
+  store,
+  id,
+  isEdit,
+  form,
+  minDate,
+  errors,
+  skillsText,
+  techStackText,
+  previousProjectsText,
+  completedTrainingText,
+  submit,
+} = useEmployeeForm()
 
 const input = 'mt-1 w-full rounded border border-gray-300 px-3 py-2'
 </script>
