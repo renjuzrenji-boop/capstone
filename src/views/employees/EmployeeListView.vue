@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useEmployeesStore } from '@/stores/employees'
 import { useEmployeeFilters } from '@/composables/useEmployeeFilters'
@@ -10,6 +10,24 @@ const store = useEmployeesStore()
 const { search, status, skills, experience, project, projectOptions, filtered, clearFilters: clearFilter } =
   useEmployeeFilters(() => store.items)
 const deleting = ref<Employee | null>(null)
+const pageSize = 10
+const currentPage = ref(1)
+const pageCount = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize)))
+const paginatedEmployees = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return filtered.value.slice(start, start + pageSize)
+})
+const firstVisible = computed(() => filtered.value.length ? (currentPage.value - 1) * pageSize + 1 : 0)
+const lastVisible = computed(() => Math.min(currentPage.value * pageSize, filtered.value.length))
+
+watch([search, status, skills, experience, project], () => {
+  currentPage.value = 1
+})
+
+watch(pageCount, (count) => {
+  if (currentPage.value > count) currentPage.value = count
+})
+
 onMounted(() => store.fetchAll().catch(() => {}))
 
 async function confirmDelete() {
@@ -92,7 +110,7 @@ async function confirmDelete() {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="e in filtered" :key="e.id" class="border-t border-gray-100 hover:bg-gray-50">
+          <tr v-for="e in paginatedEmployees" :key="e.id" class="border-t border-gray-100 hover:bg-gray-50">
             <td class="px-4 py-3 font-medium">
               <RouterLink :to="`/app/employees/${e.id}`" class="text-teal-700 hover:underline">{{ e.name }}</RouterLink>
             </td>
@@ -123,6 +141,46 @@ async function confirmDelete() {
         </tbody>
       </table>
     </div>
+
+    <nav
+      v-if="filtered.length"
+      class="mt-4 flex flex-wrap items-center justify-between gap-3"
+      aria-label="Employee list pagination"
+    >
+      <p class="text-sm text-gray-600" aria-live="polite">
+        Showing {{ firstVisible }}–{{ lastVisible }} of {{ filtered.length }} employees
+      </p>
+      <div v-if="pageCount > 1" class="flex items-center gap-2">
+        <button
+          type="button"
+          class="rounded border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+          :disabled="currentPage === 1"
+          @click="currentPage--"
+        >
+          Previous
+        </button>
+        <button
+          v-for="page in pageCount"
+          :key="page"
+          type="button"
+          class="min-w-10 rounded border px-3 py-2 text-sm"
+          :class="currentPage === page ? 'border-teal-700 bg-teal-700 text-white' : 'hover:bg-gray-100'"
+          :aria-label="`Page ${page}`"
+          :aria-current="currentPage === page ? 'page' : undefined"
+          @click="currentPage = page"
+        >
+          {{ page }}
+        </button>
+        <button
+          type="button"
+          class="rounded border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+          :disabled="currentPage === pageCount"
+          @click="currentPage++"
+        >
+          Next
+        </button>
+      </div>
+    </nav>
 
     <div v-if="deleting" class="fixed inset-0 flex items-center justify-center bg-black/40" role="dialog" aria-modal="true">
       <div class="w-full max-w-sm rounded bg-white p-6 shadow-lg">
