@@ -2,6 +2,7 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { authApi } from '@/api/auth'
 import { ROLE_PERMISSIONS } from '@/config/permissions'
+import { useApiRequest } from '@/composables/useApiRequest'
 // import type {ApiError} from '@/api/http'
 import type { AuthUser, Credentials, Permission, Role } from '@/types/auth'
 
@@ -11,8 +12,7 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem(TOKEN_KEY))
   const user = ref<AuthUser | null>(null)
   const initialized = ref(false)
-  const loading = ref(false)
-  const error = ref<string | null>(null)
+  const { loading, error, execute } = useApiRequest()
      
   const isAuthenticated = computed(() => !!token.value && !!user.value)
   const role = computed<Role | null>(() => user.value?.role ?? null)
@@ -29,19 +29,12 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function login(credentials: Credentials) {
-    loading.value = true
-    error.value = null
-    try {
+    await execute(async () => {
       const res = await authApi.login(credentials)
       token.value = res.token
       user.value = res.user
       localStorage.setItem(TOKEN_KEY, res.token)
-    } catch (e) {
-      error.value =  'Login failed'
-      throw e
-    } finally {
-      loading.value = false
-    }
+    }, 'Login failed')
   }
 
 

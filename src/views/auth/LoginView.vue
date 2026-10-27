@@ -1,35 +1,12 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-// import BaseButton from '@/components/common/BaseButton.vue'
-import { useAuthStore } from '@/stores/auth'
+import { useLoginForm } from '@/composables/useLoginForm'
 
-const auth = useAuthStore()
-const router = useRouter()
-const route = useRoute()
-
-const form = reactive({ email: '', password: '' })
-const touched = ref(false)
-
-const emailValid = () => /^\S+@\S+\.\S+$/.test(form.email)
-const passwordValid = () => form.password.length >= 6
-
-async function onSubmit() {
-  touched.value = true
-  if (!emailValid() || !passwordValid()) return
-  try {
-    await auth.login({ email: form.email, password: form.password })
-    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/app/dashboard'
-    await router.push(redirect)
-  } catch {
-    // error message is already in auth.error
-  }
-}
+const { auth, form, touched, emailValid, passwordValid, submit } = useLoginForm()
 </script>
 
 <template>
   <div class="login w-full min-h-screen">
-    <form class="login__card m-0 p-20" novalidate @submit.prevent="onSubmit">
+    <form class="login__card m-0 p-20" novalidate @submit.prevent="submit">
       <h1>Sign in</h1>
 
       <label>
