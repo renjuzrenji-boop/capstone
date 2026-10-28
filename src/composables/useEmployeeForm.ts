@@ -81,7 +81,7 @@ export function useEmployeeForm() {
   function validate() {
     const validationErrors: typeof errors.value = {}
     if (!form.name.trim()) validationErrors.name = 'Name is required'
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) validationErrors.email = 'Enter a valid email'
+    if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) validationErrors.email = 'Enter a valid email'
     if (form.phone && !/^[+\d][\d\s-]{6,}$/.test(form.phone)) {
       validationErrors.phone = 'Enter a valid phone number'
     }
