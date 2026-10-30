@@ -16,6 +16,8 @@ declare module 'vue-router' {
   }
 }
 
+const employeeFormView = () => import('@/views/employees/EmployeeFormView.vue')
+
 export const routes: RouteRecordRaw[] = [
   {
     path: '/',
@@ -31,26 +33,33 @@ export const routes: RouteRecordRaw[] = [
   },
   {
     path: '/app/employees',
-    name: 'employees',
-    component: () => import('@/views/employees/EmployeeListView.vue'),
-    meta: { title: 'Employees', requiresAuth: true, permissions: ['employees:read'] },
-  },
-  {
-    path: '/app/employees/new',
-    name: 'employee-new',
-    component: () => import('@/views/employees/EmployeeFormView.vue'),
-    meta: { title: 'Add Employee', requiresAuth: true, permissions: ['employees:write'] },
-  },
-  {
-    path: '/app/employees/:id',
-    name: 'employee-detail',
-    component: () => import('@/views/employees/EmployeeDetailView.vue'),
-    meta: { title: 'Employee Details', requiresAuth: true, permissions: ['employees:read'] },
-  },
-  {
-    path: '/app/employees/:id/edit',
-    name: 'employee-edit',
-    component: () => import('@/views/employees/EmployeeFormView.vue'),
-    meta: { title: 'Edit Employee', requiresAuth: true, permissions: ['employees:write'] },
+    component: () => import('@/views/employees/EmployeeLayout.vue'),
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'employees',
+        component: () => import('@/views/employees/EmployeeListView.vue'),
+        meta: { title: 'Employees', permissions: ['employees:read'] },
+      },
+      {
+        path: 'new',
+        name: 'employee-new',
+        component: employeeFormView,
+        meta: { title: 'Add Employee', permissions: ['employees:write'] },
+      },
+      {
+        path: ':id',
+        name: 'employee-detail',
+        component: () => import('@/views/employees/EmployeeDetailView.vue'),
+        meta: { title: 'Employee Details', permissions: ['employees:read'] },
+      },
+      {
+        path: ':id/edit',
+        name: 'employee-edit',
+        component: employeeFormView,
+        meta: { title: 'Edit Employee', permissions: ['employees:write'] },
+      },
+    ],
   },
 ]

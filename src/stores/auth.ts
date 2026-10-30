@@ -13,6 +13,7 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref<AuthUser | null>(null)
   const initialized = ref(false)
   const { loading, error, execute } = useApiRequest()
+  let restorePromise: Promise<void> | null = null
      
   const isAuthenticated = computed(() => !!token.value && !!user.value)
   const role = computed<Role | null>(() => user.value?.role ?? null)
@@ -40,14 +41,22 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function restore() {
     if (initialized.value) return
-    try {
-      if (token.value && !user.value) user.value = await authApi.me()
-    } catch {
-      token.value = null
-      localStorage.removeItem(TOKEN_KEY)
-    } finally {
-      initialized.value = true
+
+    if (!restorePromise) {
+      restorePromise = (async () => {
+        try {
+          if (token.value && !user.value) user.value = await authApi.me()
+        } catch {
+          token.value = null
+          localStorage.removeItem(TOKEN_KEY)
+        } finally {
+          initialized.value = true
+        }
+      })()
     }
+
+    await restorePromise
+    restorePromise = null
   }
 
   return {

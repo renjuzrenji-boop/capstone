@@ -27,4 +27,16 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          const normalizedId = id.replaceAll('\\', '/')
+          const vendorPackages = ['/node_modules/vue/', '/node_modules/vue-router/', '/node_modules/pinia/', '/node_modules/axios/']
+
+          return vendorPackages.some((packagePath) => normalizedId.includes(packagePath)) ? 'vendor' : undefined
+        },
+      },
+    },
+  },
 })

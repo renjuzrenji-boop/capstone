@@ -1,44 +1,28 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-import { useEmployeesStore } from '@/stores/employees'
-import { useEmployeeFilters } from '@/composables/useEmployeeFilters'
-import type { Employee } from '@/types/employee'
+import { useEmployeeList } from '@/composables/useEmployeeList'
+import EmployeeTable from './EmployeeTable.vue'
 
-const auth = useAuthStore()
-const store = useEmployeesStore()
-const { search, status, skills, experience, project, projectOptions, filtered, clearFilters: clearFilter } =
-  useEmployeeFilters(() => store.items)
-const deleting = ref<Employee | null>(null)
-const pageSize = 10
-const currentPage = ref(1)
-const pageCount = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize)))
-const paginatedEmployees = computed(() => {
-  const start = (currentPage.value - 1) * pageSize
-  return filtered.value.slice(start, start + pageSize)
-})
-const firstVisible = computed(() => filtered.value.length ? (currentPage.value - 1) * pageSize + 1 : 0)
-const lastVisible = computed(() => Math.min(currentPage.value * pageSize, filtered.value.length))
-
-watch([search, status, skills, experience, project], () => {
-  currentPage.value = 1
-})
-
-watch(pageCount, (count) => {
-  if (currentPage.value > count) currentPage.value = count
-})
-
-onMounted(() => store.fetchAll().catch(() => {}))
-
-async function confirmDelete() {
-  if (!deleting.value) return
-  try {
-    await store.remove(deleting.value.id)
-  } catch {
-    /* error shown from store */
-  }
-  deleting.value = null
-}
+const {
+  store,
+  canWrite,
+  search,
+  status,
+  skills,
+  experience,
+  project,
+  projectOptions,
+  filtered,
+  clearFilters,
+  deleting,
+  currentPage,
+  pageCount,
+  paginatedEmployees,
+  firstVisible,
+  lastVisible,
+  requestDelete,
+  cancelDelete,
+  confirmDelete,
+} = useEmployeeList()
 </script>
 
 <template>
@@ -49,7 +33,7 @@ async function confirmDelete() {
         <h1 class="text-3xl font-bold">Employees</h1>
       </div>
       <RouterLink
-        v-if="auth.can('employees:write')"
+        v-if="canWrite"
         to="/app/employees/new"
         class="rounded bg-teal-700 px-4 py-2 font-medium text-white hover:bg-teal-800"
       >
@@ -89,58 +73,18 @@ async function confirmDelete() {
         <option value="all">All Projects</option>
         <option v-for="p in projectOptions" :key="p" :value="p">{{ p }}</option>
       </select>
-      <button class="rounded bg-gray-200 px-4 py-2 font-medium text-gray-700 hover:bg-gray-300" @click="clearFilter"> Clear Filter</button>
+      <button class="rounded bg-gray-200 px-4 py-2 font-medium text-gray-700 hover:bg-gray-300" @click="clearFilters"> Clear Filter</button>
     </div>
 
     <p v-if="store.error" class="mb-4 rounded bg-red-50 p-3 text-red-700" role="alert">{{ store.error }}</p>
     <p v-if="store.loading && !store.items.length" class="text-gray-500">Loading...</p>
 
-    <div v-else class="overflow-x-auto rounded border border-gray-200">
-      <table class="min-w-full text-left text-sm">
-        <thead class="bg-gray-50 text-xs uppercase text-gray-600">
-          <tr>
-            <th class="px-4 py-3">Name</th>
-            <th class="px-4 py-3">Email</th>
-            <th class="px-4 py-3">Department</th>
-            <th class="px-4 py-3">Designation</th>
-            <th class="px-4 py-3">Skills</th>
-            <th class="px-4 py-3">Work Experience</th>
-            <th class="px-4 py-3">Status</th>
-            <th class="px-4 py-3 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="e in paginatedEmployees" :key="e.id" class="border-t border-gray-100 hover:bg-gray-50">
-            <td class="px-4 py-3 font-medium">
-              <RouterLink :to="`/app/employees/${e.id}`" class="text-teal-700 hover:underline">{{ e.name }}</RouterLink>
-            </td>
-            <td class="px-4 py-3">{{ e.email }}</td>
-            <td class="px-4 py-3">{{ e.department }}</td>
-            <td class="px-4 py-3">{{ e.designation }}</td>
-            <td class="px-4 py-3">{{ (e.skills ?? []).join(', ') }}</td>
-            <td class="px-4 py-3">{{ e.workExperience }}</td>
-            <td class="px-4 py-3">
-              <span
-                class="rounded-full px-2 py-0.5 text-xs font-medium"
-                :class="e.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-700'"
-              >
-                {{ e.status }}
-              </span>
-            </td>
-            <td class="space-x-3 px-4 py-3 text-right">
-              <RouterLink :to="`/app/employees/${e.id}`" class="text-teal-700 hover:underline">View</RouterLink>
-              <template v-if="auth.can('employees:write')">
-                <RouterLink :to="`/app/employees/${e.id}/edit`" class="text-blue-700 hover:underline">Edit</RouterLink>
-                <button class="text-red-700 hover:underline" @click="deleting = e">Delete</button>
-              </template>
-            </td>
-          </tr>
-          <tr v-if="!filtered.length">
-            <td colspan="6" class="px-4 py-8 text-center text-gray-500">No employees found.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <EmployeeTable
+      v-else
+      :employees="paginatedEmployees"
+      :can-write="canWrite"
+      @delete="requestDelete"
+    />
 
     <nav
       v-if="filtered.length"
@@ -189,7 +133,7 @@ async function confirmDelete() {
           <strong>{{ deleting.name }}</strong> will be permanently removed.
         </p>
         <div class="flex justify-end gap-3">
-          <button class="rounded border px-4 py-2" @click="deleting = null">Cancel</button>
+          <button class="rounded border px-4 py-2" @click="cancelDelete">Cancel</button>
           <button class="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700" :disabled="store.loading" @click="confirmDelete">
             Delete
           </button>

@@ -6,10 +6,30 @@ import type { Employee, NewEmployee } from '@/types/employee'
 
 export const useEmployeesStore = defineStore('employees', () => {
   const items = ref<Employee[]>([])
+  const loaded = ref(false)
   const { loading, error, msg, execute } = useApiRequest()
+  let fetchAllPromise: Promise<Employee[]> | null = null
 
-  const fetchAll = () => execute(async () => { items.value = await employeesApi.list() })
-  const fetchOne = (id: number) => execute(() => employeesApi.get(id))
+  const fetchAll = () => {
+    if (loaded.value) return Promise.resolve(items.value)
+    if (fetchAllPromise) return fetchAllPromise
+
+    fetchAllPromise = execute(async () => {
+      const employees = await employeesApi.list()
+      items.value = employees
+      loaded.value = true
+      return employees
+    }).finally(() => {
+      fetchAllPromise = null
+    })
+
+    return fetchAllPromise
+  }
+
+  const fetchOne = (id: number) => {
+    const cachedEmployee = items.value.find((employee) => employee.id === id)
+    return cachedEmployee ? Promise.resolve(cachedEmployee) : execute(() => employeesApi.get(id))
+  }
 
   const create = (payload: NewEmployee) =>
     execute(async () => {
